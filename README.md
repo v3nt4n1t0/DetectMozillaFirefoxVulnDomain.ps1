@@ -1,4 +1,4 @@
-# Mozilla Firefox vulnerability scanner for Domain
+# Mozilla Firefox vulnerability Scanner for Domain
 
 ## Description: 
 
