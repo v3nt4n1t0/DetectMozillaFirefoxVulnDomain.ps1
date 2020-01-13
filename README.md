@@ -1,0 +1,1 @@
+# DetectMozillaFirefoxVulnDomain.ps1
