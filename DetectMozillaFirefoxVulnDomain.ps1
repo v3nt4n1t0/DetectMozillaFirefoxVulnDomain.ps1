@@ -46,29 +46,41 @@ if($cred){
             $session = New-PSSession -ComputerName $cname -Credential $cred
             Invoke-Command -Session $session -ScriptBlock{
                 $machine = (Get-WmiObject -class win32_NetworkAdapterConfiguration -Filter 'ipenabled = "true"').ipaddress[0] + "," +[Environment]::GetEnvironmentVariable("ComputerName") 
-            
+                
                 ls HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall | ForEach-Object -Process {      
-            
                     if($_.GetValue("DisplayName") -like "Mozilla Firefox*"){
+                    $banderaVersion=$false
+                
+                        if($_.GetValue("DisplayName") -like "Mozilla Firefox*ESR*"){
+                            $banderaVersion=$true
+                        }
+                
                     $mozilla = $_.GetValue("DisplayName")
                     $mozillaSplit = $mozilla.Split(" ")
                     $versionmozilla = $mozillaSplit[2]
                     $versionmozilla = $versionmozilla.Replace(".","")
                     }
                 }
-
-                ls HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | ForEach-Object -Process {
-                        if($_.GetValue("DisplayName") -like "Mozilla Firefox*"){
-                        $mozilla = $_.GetValue("DisplayName")
-                        $mozillaSplit = $mozilla.Split(" ")
-                        $versionmozilla = $mozillaSplit[2]
-                        $versionmozilla = $versionmozilla.Replace(".","")
+                
+                ls HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall -ErrorAction SilentlyContinue | ForEach-Object -Process {
+                    if($_.GetValue("DisplayName") -like "Mozilla Firefox*"){
+                    $banderaVersion=$false
+                
+                        if($_.GetValue("DisplayName") -like "Mozilla Firefox*ESR*"){
+                            $banderaVersion=$true
                         }
+                
+                    $mozilla = $_.GetValue("DisplayName")
+                    $mozillaSplit = $mozilla.Split(" ")
+                    $versionmozilla = $mozillaSplit[2]
+                    $versionmozilla = $versionmozilla.Replace(".","")
+                    }
                 }
-     
-            if(!$mozilla){"$machine -> Does not contain Mozilla Firefox"}
-            elseif($versionmozilla -lt 7201){Write-Host -ForegroundColor Red "$machine -> Vulnerable!"}
-            else{"$machine -> Non-vulnerable"}
+                
+                if(!$mozilla){"$machine -> Does not contain Mozilla Firefox"}
+                elseif(($banderaVersion=$false) -And ($versionmozilla -lt 7201)){Write-Host -ForegroundColor Red "$machine -> Vulnerable!"}
+                elseif(($banderaVersion=$true) -And ($versionmozilla -lt 6841)){Write-Host -ForegroundColor Red "$machine -> Vulnerable!"}
+                else{"$machine -> Non-vulnerable"}
             }
 
     
@@ -79,7 +91,7 @@ if($cred){
         else{Write-Host -ForegroundColor DarkYellow "$cname does not respond to ping or the machine is off. Check that firewall rules are not blocking the connection"}
     }
 
-Write-Host "`n To fix the vulnerability UPDATE Mozilla Firefox to 72.0.1 or higher`n"
+Write-Host "`n To fix the vulnerability UPDATE Mozilla Firefox `n"
 
 }
 else{Write-Host -ForegroundColor Red -BackgroundColor Yellow "`n Administrator credentials are required to run the script`n"}
